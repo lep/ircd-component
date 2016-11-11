@@ -85,9 +85,9 @@ class Component:
             return
         logger.debug("Disassociated %s" % irc.nick)
 
-        jid = "%s@irc.xmpp.local" % irc.nick
+        jid = "%s@%s" % (irc.nick, self.config["transport_domain"])
         p = presence( pfrom = jid
-                    , pto = "%s@muc.xmpp.local/%s" % (self.config["ircd_room"], irc.nick)
+                    , pto = "%s/%s" % (self.config["muc_room"], irc.nick)
                     , ptype = "unavailable"
                     )
 
@@ -145,7 +145,7 @@ class Component:
                 if conn.nick != fromJid.resource:
                     conn.write(irc)
 
-            if subject is not None:
+            if subject is not None and subject.text is not None:
                 try:
                     self.topic = (fromJid.resource, subject.text.encode("UTF-8"))
                     conn = self.ircConnectionsByJid[message.get("to")]

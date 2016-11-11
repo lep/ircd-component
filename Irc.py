@@ -78,11 +78,11 @@ class IrcClient(asynchat.async_chat):
             self.invalidNick()
             return
 
-        self.jid = "%s@irc.xmpp.local" % nick
+        self.jid = "%s@%s" % (nick, self.config["transport_domain"])
         self.component.associateJid(self, Jid(self.jid))
 
         p = presence( pfrom = self.jid
-                    , pto = "%s@muc.xmpp.local/%s" % (self.config["ircd_room"], self.nick)
+                    , pto = "%s/%s" % (self.config["muc_room"], self.nick)
                     )
         x = ET.SubElement(p, "x")
         x.set("xmlns", "http://jabber.org/protocol/muc")
@@ -129,6 +129,35 @@ class IrcClient(asynchat.async_chat):
     @On("USER")
     def onUser(self, args):
         pass
+
+    @On("WHO")
+    def onWho(self, args):
+        try:
+            chan = args[0]
+            if chan != self.config["ircd_room"]:
+                return
+        except IndexError:
+            return
+
+        m = IrcMessage(":xmpp 352 %s" % self.nick)
+
+        for nick in self.component.ircNicks:
+            m.params = [ self.config["ircd_room"]
+                       , nick
+                       , "x", "x.x"
+                       , nick
+                       , "H", "1 %s" % nick
+                       ]
+
+            self.write(m)
+        self.write(IrcMessage(":xmpp 315 %s :End of WHO list" % self.nick))
+
+    @On("MODE")
+    def onMonde(self, args):
+        m = IrcMessage("MODE")
+        m.params = args
+        self.write(m)
+
 
     @On("PONG")
     def onPong(self, args):
