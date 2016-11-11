@@ -146,9 +146,12 @@ class Component:
                     conn.write(irc)
 
             if subject is not None:
-                self.topic = (fromJid.resource, subject.text.encode("UTF-8"))
-                conn = self.ircConnectionsByJid[message.get("to")]
-                conn.write(IrcMessage(":%s!x@x.x TOPIC %s :%s" % (self.topic[0], self.config["ircd_room"], self.topic[1])))
+                try:
+                    self.topic = (fromJid.resource, subject.text.encode("UTF-8"))
+                    conn = self.ircConnectionsByJid[message.get("to")]
+                    conn.write(IrcMessage(":%s!x@x.x TOPIC %s :%s" % (self.topic[0], self.config["ircd_room"], self.topic[1])))
+                except KeyError:
+                    pass
                 
         elif message.get("type") == "chat":
             if Jid(message.get("from")).bare != self.config["muc_room"]:
@@ -156,9 +159,13 @@ class Component:
                 pass
             else:
                 if msg is not None:
-                    conn = self.ircConnectionsByJid[message.get("to")]
-                    irc = IrcMessage(":%s!x@x PRIVMSG %s :%s" % (fromJid.resource, conn.nick, msg.text))
-                    conn.write(irc)
+                    try:
+                        conn = self.ircConnectionsByJid[message.get("to")]
+                        irc = IrcMessage(":%s!x@x PRIVMSG %s :%s" % (fromJid.resource, conn.nick, msg.text))
+                        conn.write(irc)
+                    except KeyError:
+                        pass
+
 
 
 c = Component()

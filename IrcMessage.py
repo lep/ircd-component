@@ -1,4 +1,7 @@
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ParserException(BaseException):
     pass
@@ -47,6 +50,7 @@ class IrcMessage:
                            $""", re.VERBOSE)
         res = re.match(p, msg)
         if res is None:
+            logger.debug("Fault msg is %s" % msg)
             raise ParserException() 
 
         self.prefix = res.group(1)

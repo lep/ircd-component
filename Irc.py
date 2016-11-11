@@ -48,8 +48,8 @@ class IrcClient(asynchat.async_chat):
 
 
     def write(self, msg):
-        #if msg.prefix is None:
-        #    msg.prefix = "xmppp"
+        if msg.prefix is None:
+            msg.prefix = "xmpp"
         logger.debug("Irc writeing %s" % msg)
         self.push(str(msg))
         #self.push(str(msg))
@@ -102,31 +102,27 @@ class IrcClient(asynchat.async_chat):
 
 
     def sendPreamble(self):
-        self.write(IrcMessage(":xmppp 001 %s :Hello %s" % (self.nick, self.nick)))
-        self.write(IrcMessage(":xmppp 002 %s :Your host is xmppp" % self.nick))
-        self.write(IrcMessage(":xmppp 003 %s :This server was created just for you" % self.nick))
-        self.write(IrcMessage(":xmppp 004 %s" % self.nick))
+        self.write(IrcMessage(":xmpp 001 %s :Hello %s" % (self.nick, self.nick)))
+        self.write(IrcMessage(":xmpp 002 %s :Your host is xmpp" % self.nick))
+        self.write(IrcMessage(":xmpp 003 %s :This server was created just for you" % self.nick))
+        self.write(IrcMessage(":xmpp 004 %s" % self.nick))
 
         self.write(IrcMessage(":%s!x@x.x NICK %s" % (self.nick, self.nick)))
 
-        self.write(IrcMessage(":xmppp 375 %s :- xmppp Message of the day -" % self.nick))
-        self.write(IrcMessage(":xmppp 372 %s :- Hi" % self.nick))
-        self.write(IrcMessage(":xmppp 376 %s :End of MOTD command" % self.nick))
+        self.write(IrcMessage(":xmpp 375 %s :- xmpp Message of the day -" % self.nick))
+        self.write(IrcMessage(":xmpp 372 %s :- Hi" % self.nick))
+        self.write(IrcMessage(":xmpp 376 %s :End of MOTD command" % self.nick))
 
-        self.write(IrcMessage(":xmppp PING bla"))
+        self.write(IrcMessage(":xmpp PING bla"))
         self.joinChannel()
 
     def joinChannel(self):
-        self.write(IrcMessage(":%s!x@x.x JOIN %s" % (self.config["ircd_room"], self.nick)))
+        self.write(IrcMessage(":%s!x@x.x JOIN %s" % (self.nick, self.config["ircd_room"])))
         if self.component.topic is not None:
-            self.write(IrcMessage(":xmppp 332 %s %s :%s" % (self.config["ircd_room"], self.component.topic)))
-        else:
-            self.write(IrcMessage(":xmppp 331 %s %s :No topic set" % (self.config["ircd_room"], self.nick)))
-
-        self.write(IrcMessage(":xmppp 333 %s xmppp %s 1406918580" % (self.config["ircd_room"], self.nick)))
-        self.write(IrcMessage(":xmppp 353 %s * %s :%s" % (self.nick, self.config["ircd_room"], self.component.nicklist())))
-        self.write(IrcMessage(":xmppp 366 %s :End of /NAMES list." % (self.nick))) 
-        self.write(IrcMessage(":xmppp 324 %s %s +t" % (self.config["ircd_room"], self.nick))) 
+            self.write(IrcMessage(":xmpp 332 %s %s :%s" % (self.component.topic[0], self.config["ircd_room"], self.component.topic[1])))
+        self.write(IrcMessage(":xmpp 353 %s = %s :%s" % (self.nick, self.config["ircd_room"], self.component.nicklist())))
+        self.write(IrcMessage(":xmpp 366 %s %s :End of /NAMES list." % (self.nick, self.config["ircd_room"]))) 
+        self.write(IrcMessage(":xmpp 324 %s %s +t" % (self.config["ircd_room"], self.nick))) 
 
 
 
@@ -239,5 +235,5 @@ class IrcClient(asynchat.async_chat):
             self.mapping[p.command](p.params)
         else:
             nick = self.nick or "*"
-            self.write(IrcMessage(":xmppp 421 %s %s :Unknown command\r\n" % (nick, p.command)))
+            self.write(IrcMessage(":xmpp 421 %s %s :Unknown command\r\n" % (nick, p.command)))
 
