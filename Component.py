@@ -12,13 +12,6 @@ from Jid import *
 from IrcMessage import *
 from Stanzas import *
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-logger
-fmt = logging.StreamHandler()
-fmt.setFormatter(logging.Formatter(fmt='%(name)s: %(message)s'))
-logger.addHandler(fmt)
-
 
 class Component:
     ircConnectionsByJid = dict()
@@ -26,15 +19,7 @@ class Component:
     topic = None
     iqCallbacks = dict()
 
-    def __init__(self):
-        config = dict()
-        config["xmpp_host"] = "xmpp.local"
-        config["xmpp_port"] = 5347
-        config["transport_password"] = "securelol"
-        config["transport_domain"] = "irc.xmpp.local"
-        config["muc_room"] = "#b@muc.xmpp.local"
-        config["ircd_room"] = "#k"
-
+    def __init__(self, config):
         self.config = config
 
         self.xmpp = XMPPComponent(self, config)
@@ -76,14 +61,12 @@ class Component:
         self.iqCallbacks[uid] = fn
 
     def associateJid(self, irc, jid):
-        logger.debug("Associated %s" % str(jid))
         self.ircConnectionsByJid[str(jid)] = irc
         self.addNick(jid.name)
 
     def disassociateIrcConnection(self, irc):
         if not irc.associated:
             return
-        logger.debug("Disassociated %s" % irc.nick)
 
         jid = "%s@%s" % (irc.nick, self.config["transport_domain"])
         p = presence( pfrom = jid
@@ -117,9 +100,7 @@ class Component:
             return
 
         fromJid = Jid(msg.get("from"))
-        logger.debug(fromJid)
         if fromJid.resource == conn.nick:
-            logger.debug("%s now ready" % conn.nick)
             conn.associated = True
             if msg.get("type") != "unavailable":
                 conn.sendPreamble()
@@ -167,6 +148,3 @@ class Component:
                         pass
 
 
-
-c = Component()
-asyncore.loop()

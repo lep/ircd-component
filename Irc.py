@@ -50,9 +50,8 @@ class IrcClient(asynchat.async_chat):
     def write(self, msg):
         if msg.prefix is None:
             msg.prefix = "xmpp"
-        logger.debug("Irc writeing %s" % msg)
+        logger.debug("to client: %s" % msg)
         self.push(str(msg))
-        #self.push(str(msg))
 
     def invalidNick(self):
         msg = IrcMessage("433")
@@ -246,14 +245,13 @@ class IrcClient(asynchat.async_chat):
         self.buffer = ""
 
     def handle_close(self):
-        logger.debug("Connection closed")
         self.component.disassociateIrcConnection(self)
         self.close()
 
 
     def onIrcMessage(self, msg):
         msg = msg.decode("UTF-8")
-        logger.debug("Got irc message %s" % msg)
+        logger.debug("from client %s" % msg)
         try:
             p = IrcMessage(msg)
         except ParserException:
