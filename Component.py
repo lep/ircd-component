@@ -50,12 +50,23 @@ class Component:
     def updateTopic(self, iq):
         pass
 
-    def incomingIq(self, uid, iq):
+    def incomingIq(self, uid, iqstanza):
         try:
-            self.iqCallbacks[uid](iq)
+            self.iqCallbacks[uid](iqstanza)
             del self.iqCallbacks[uid]
         except KeyError:
-            pass
+            uid = iqstanza.get("id")
+            i = iq( ifrom = iqstanza.get("to")
+                  , ito   = iqstanza.get("from")
+                  , id = uid
+                  , itype = "error")
+            error = ET.SubElement(i, "error")
+            error.set("type", "cancel")
+            inner_error = ET.SubElement(error, "feature-not-implemented")
+            inner_error.set("xmlns", "urn:ietf:params:xml:ns:xmpp-stanzas")
+
+            self.writeToJabber(i)
+
 
     def registerIq(self, uid, fn):
         self.iqCallbacks[uid] = fn
@@ -74,7 +85,21 @@ class Component:
                     , ptype = "unavailable"
                     )
 
+        i = iq( ifrom = self.config["transport_domain"]
+              , ito = self.config["muc_room"]
+              , itype = "set"
+              , id = str(uuid.uuid4())
+              )
+        
+        x = ET.SubElement(i, "query")
+        x.set("xmlns", "http://jabber.org/protocol/muc#admin")
+        item = ET.SubElement(x, "item")
+        item.set("affiliation", "none")
+        item.set("jid", "%s@%s" % (irc.nick, self.config["transport_domain"]))
+
+        self.writeToJabber(i)
         self.writeToJabber(p)
+
 
         if jid.lower() in self.ircConnectionsByJid:
             del self.ircConnectionsByJid[jid.lower()]
