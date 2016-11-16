@@ -12,6 +12,8 @@ from Jid import *
 from IrcMessage import *
 from Stanzas import *
 
+logger = logging.getLogger(__name__)
+
 
 class Component:
     ircConnectionsByJid = dict()
@@ -135,6 +137,13 @@ class Component:
             else:
                 self.addNick(fromJid.resource)
 
+    def handleMe(self, msg):
+        act = "/me "
+        if msg.startswith(act):
+            return "\x01ACTION " + msg[len(act):] + "\x01"
+        else:
+            return msg
+
     def handleMessage(self, message):
         ircJid = Jid(message.get("to"))
         fromJid = Jid(message.get("from"))
@@ -144,7 +153,7 @@ class Component:
         if message.get("type") == "groupchat":
             subject = message.find("{jabber:component:accept}subject")
             if msg is not None:
-                txt = msg.text.encode("UTF-8")
+                txt = self.handleMe(msg.text.encode("UTF-8"))
                 irc = IrcMessage(":%s!x@x.x PRIVMSG %s :%s" % (fromJid.resource, self.config["ircd_room"], txt))
 
                 conn = self.ircConnectionsByJid[message.get("to")]
@@ -167,7 +176,9 @@ class Component:
                 if msg is not None:
                     try:
                         conn = self.ircConnectionsByJid[message.get("to")]
-                        irc = IrcMessage(":%s!x@x PRIVMSG %s :%s" % (fromJid.resource, conn.nick, msg.text))
+                        txt = self.handleMe(msg.text.encode("UTF-8"))
+                        irc =":%s!x@x PRIVMSG %s :%s" % (fromJid.resource, conn.nick, txt)
+                        irc = IrcMessage(irc)
                         conn.write(irc)
                     except KeyError:
                         pass

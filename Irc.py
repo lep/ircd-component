@@ -62,7 +62,7 @@ class IrcClient(asynchat.async_chat):
     @On("NICK")
     def onNick(self, args):
         try:
-            nick = args[0]
+            nick = args[0].encode("UTF-8")
         except IndexError:
             return
 
@@ -201,6 +201,14 @@ class IrcClient(asynchat.async_chat):
         except IndexError:
             pass
 
+    def handleMe(self, msg):
+        act = "\x01ACTION "
+        if msg.startswith(act):
+            #return "/me not-yet-implemented"
+            return "/me "+ msg[len(act):-2]
+        else:
+            return msg
+
     @On("PRIVMSG")
     def onMsg(self, args):
         try:
@@ -213,7 +221,7 @@ class IrcClient(asynchat.async_chat):
             m = message( mfrom = self.jid
                        , mto = self.config["muc_room"]
                        , mtype = "groupchat"
-                       , body = msg
+                       , body = self.handleMe(msg)
                        )
             self.component.writeToJabber(m)
         elif chan[0] == "#" or chan[0] == "&":
@@ -222,7 +230,7 @@ class IrcClient(asynchat.async_chat):
             m = message( mfrom = self.jid
                        , mto = "%s/%s" % (self.config["muc_room"], chan)
                        , mtype = "chat"
-                       , body = msg
+                       , body = self.handleMe(msg)
                        )
             self.component.writeToJabber(m)
 
