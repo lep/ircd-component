@@ -76,7 +76,20 @@ class Component:
     def associateJid(self, irc, jid):
         self.ircConnectionsByJid[str(jid)] = irc
         self.addNick(jid.name)
+        i = iq( itype="set"
+              , ifrom=self.config["transport_domain"]
+              , ito=self.config["muc_room"]
+              , id=str(uuid.uuid4())
+              )
 
+        query = ET.SubElement(i, "query")
+        query.set("xmlns", "http://jabber.org/protocol/muc#admin")
+
+        item = ET.SubElement(query, "item")
+        item.set("affiliation", "member")
+        item.set("jid", "%s@%s" % (irc.nick, self.config["transport_domain"]))
+
+        self.writeToJabber(i)
     def disassociateIrcConnection(self, irc):
         if not irc.associated:
             return
@@ -106,6 +119,8 @@ class Component:
         if jid.lower() in self.ircConnectionsByJid:
             del self.ircConnectionsByJid[jid.lower()]
         self.removeNick(irc.nick)
+
+            
 
 
     def writeToJabber(self, stanza):
